@@ -3,86 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WiFi Call App</title>
+    <title>Internet Call App</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e3e6ed; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: #e3e6ed; display: flex; justify-content: center; align-items: center; height: 100vh; }
 
-        /* Phone Container (Desktop mode frame) */
         .phone-container { 
-            width: 360px; 
-            height: 680px; 
-            background: #fff; 
-            border-radius: 40px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3); 
-            border: 10px solid #222; 
-            overflow: hidden; 
-            position: relative;
-            display: flex;
-            flex-direction: column;
+            width: 360px; height: 680px; background: #fff; border-radius: 40px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3); border: 10px solid #222; 
+            overflow: hidden; position: relative; display: flex; flex-direction: column;
         }
 
-        /* Fast Login Overlay */
+        /* Login Screen */
         #login-screen {
             position: absolute; width: 100%; height: 100%; background: white; z-index: 100;
             display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
         }
-        #login-screen input { 
-            width: 80%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; text-align: center;
-        }
-        #login-screen button {
-            width: 80%; padding: 15px; background: #4CAF50; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;
-        }
+        #login-screen input { width: 80%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; text-align: center; }
+        #login-screen button { width: 80%; padding: 15px; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; }
 
-        /* Header Style */
-        .header { 
-            padding: 15px; display: flex; justify-content: space-between; align-items: center; 
-            background: #fff; border-bottom: 1px solid #f0f0f0;
+        /* Profile Modal */
+        #profile-modal {
+            position: absolute; bottom: -100%; left: 0; width: 100%; height: 90%; 
+            background: white; z-index: 110; transition: 0.4s; border-radius: 30px 30px 0 0;
+            padding: 20px; box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
         }
-        .profile-icon { width: 35px; height: 35px; background: #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
-        .app-title { font-weight: bold; color: #333; font-size: 0.9rem; }
+        #profile-modal.active { bottom: 0; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
+        .close-btn { cursor: pointer; color: red; }
+        .profile-pic-area { text-align: center; margin-bottom: 15px; }
+        #profile-img-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background: #eee; border: 2px solid #4CAF50; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 12px; color: #666; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
 
-        /* Dialer UI */
-        #number-display { 
-            flex-grow: 1; display: flex; flex-direction: column; justify-content: center; 
-            align-items: center; font-size: 2.5rem; color: #222; height: 150px;
-        }
-        .keypad { 
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px 40px; background: #fafafa; border-radius: 30px 30px 0 0;
-        }
-        .key { 
-            width: 70px; height: 70px; border-radius: 50%; border: none; background: #eee; 
-            font-size: 1.5rem; cursor: pointer; transition: 0.2s; 
-        }
-        .key:active { background: #ccc; transform: scale(0.9); }
+        /* App UI */
+        .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+        .profile-icon { width: 35px; height: 35px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
+        .app-title { font-weight: bold; color: #333; font-size: 1rem; }
+
+        #number-display-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; position: relative; width: 100%; }
+        #number-display { font-size: 2.5rem; color: #222; }
+        .clear-btn { position: absolute; right: 40px; font-size: 1.5rem; cursor: pointer; color: #888; display: none; }
+
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px 40px; background: #fafafa; }
+        .key { width: 70px; height: 70px; border-radius: 50%; border: none; background: #eee; font-size: 1.5rem; cursor: pointer; }
+        .key:active { background: #ccc; }
         .call-btn-container { padding: 10px 40px 30px; background: #fafafa; display: flex; justify-content: center; }
-        .call-btn { 
-            width: 70px; height: 70px; background: #4CAF50; border: none; border-radius: 50%; 
-            color: white; font-size: 1.5rem; cursor: pointer; box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-        }
+        .call-btn { width: 70px; height: 70px; background: #4CAF50; border: none; border-radius: 50%; color: white; font-size: 1.5rem; cursor: pointer; }
 
-        /* For Mobile Phones */
-        @media (max-width: 400px) {
-            .phone-container { width: 100vw; height: 100vh; border: none; border-radius: 0; }
-        }
     </style>
 </head>
 <body>
 
 <div class="phone-container">
     <div id="login-screen">
-        <h2 style="margin-bottom: 20px;">Welcome</h2>
-        <input type="number" id="login-mobile" placeholder="Enter Mobile Number">
-        <button onclick="handleLogin()">LOGIN</button>
+        <h2>Internet Call</h2>
+        <input type="number" id="login-mobile" placeholder="Mobile Number">
+        <button onclick="handleLogin()">START</button>
+    </div>
+
+    <div id="profile-modal">
+        <div class="modal-header">
+            <span>Edit Profile</span>
+            <span class="close-btn" onclick="toggleProfile()">X</span>
+        </div>
+        <div class="profile-pic-area">
+            <img id="profile-img-preview" src="https://via.placeholder.com/80" alt="Profile">
+            <input type="file" id="photo-upload" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+            <p onclick="document.getElementById('photo-upload').click()" style="color:#4CAF50; font-size:12px; cursor:pointer; margin-top:5px;">Change Photo</p>
+        </div>
+        <div class="input-group">
+            <label>Mobile Number</label>
+            <input type="text" id="prof-mobile" readonly>
+        </div>
+        <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="prof-name" placeholder="Enter Full Name">
+        </div>
+        <div class="input-group">
+            <label>Address</label>
+            <input type="text" id="prof-address" placeholder="Enter Address">
+        </div>
+        <button onclick="saveProfile()" style="width:100%; padding:12px; background:#4CAF50; color:white; border:none; border-radius:10px;">SAVE PROFILE</button>
     </div>
 
     <div class="header">
-        <div class="profile-icon">👤</div>
-        <div class="app-title">WIFI CALL APP</div>
-        <div style="width: 35px;"></div> </div>
+        <div class="profile-icon" onclick="toggleProfile()">👤</div>
+        <div class="app-title">INTERNET CALL APP</div>
+        <div style="width: 35px;"></div>
+    </div>
 
-    <div id="number-display">0</div>
+    <div id="number-display-container">
+        <div id="number-display">0</div>
+        <div class="clear-btn" id="clear-btn" onclick="backspace()">⌫</div>
+    </div>
 
     <div class="keypad">
         <button class="key" onclick="press('1')">1</button>
@@ -104,7 +120,6 @@
 </div>
 
 <script>
-    // Supabase Configuration
     const SUPABASE_URL = 'https://bqsmlubhwvmjlyowctqy.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxc21sdWJod3Ztamx5b3djdHF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NTk5NzIsImV4cCI6MjA4ODQzNTk3Mn0.rYvhWAZOhc1ZNAOJJ-DvThkCsLOCveqzXmDrZS_hdQk';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -112,64 +127,91 @@
     let currentNumber = "";
     let myNumber = localStorage.getItem('my_number');
 
-    // Auto-Login Check
     if (myNumber) {
         document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('prof-mobile').value = myNumber;
         updateStatus('online');
+        loadProfileData();
     }
 
     async function handleLogin() {
         const num = document.getElementById('login-mobile').value;
-        if (num.length < 10) return alert("Enter valid number");
-        
+        if (num.length < 5) return alert("Enter valid number");
         myNumber = num;
         localStorage.setItem('my_number', num);
-        
-        // Save to Supabase
         await _supabase.from('profiles').upsert({ mobile_number: num, status: 'online' });
-        
-        document.getElementById('login-screen').style.display = 'none';
+        location.reload(); 
     }
 
     function press(num) {
-        if (currentNumber === "0") currentNumber = "";
+        if (currentNumber.length === 0) document.getElementById('clear-btn').style.display = 'block';
         currentNumber += num;
         document.getElementById('number-display').innerText = currentNumber;
     }
 
-    async function makeCall() {
-        if (!currentNumber) return alert("Dial a number first");
+    function backspace() {
+        currentNumber = currentNumber.slice(0, -1);
+        document.getElementById('number-display').innerText = currentNumber || "0";
+        if (currentNumber === "") document.getElementById('clear-btn').style.display = 'none';
+    }
 
-        // Check Receiver Status
-        const { data, error } = await _supabase
-            .from('profiles')
-            .select('status')
-            .eq('mobile_number', currentNumber)
-            .single();
+    function toggleProfile() {
+        document.getElementById('profile-modal').classList.toggle('active');
+    }
 
-        if (data && data.status === 'online') {
-            alert("Ringing " + currentNumber + "...");
-            // WebRTC Logic starts here
-        } else {
-            alert("User is offline. Missed call logged.");
-            await _supabase.from('missed_calls').insert([
-                { from_user: myNumber, to_user: currentNumber }
-            ]);
+    function previewPhoto(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => document.getElementById('profile-img-preview').src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
         }
+    }
+
+    async function saveProfile() {
+        const name = document.getElementById('prof-name').value;
+        const addr = document.getElementById('prof-address').value;
         
+        const { error } = await _supabase.from('profiles').update({ 
+            full_name: name, 
+            address: addr 
+        }).eq('mobile_number', myNumber);
+
+        if (!error) {
+            alert("Profile Saved!");
+            toggleProfile();
+        } else {
+            alert("Error saving profile");
+        }
+    }
+
+    async function loadProfileData() {
+        const { data } = await _supabase.from('profiles').select('*').eq('mobile_number', myNumber).single();
+        if (data) {
+            document.getElementById('prof-name').value = data.full_name || "";
+            document.getElementById('prof-address').value = data.address || "";
+        }
+    }
+
+    async function makeCall() {
+        if (!currentNumber) return alert("Dial a number");
+        const { data } = await _supabase.from('profiles').select('status').eq('mobile_number', currentNumber).single();
+        
+        if (data && data.status === 'online') {
+            alert("Connecting to " + currentNumber + "...");
+        } else {
+            alert("User Offline. Missed Call Sent.");
+            await _supabase.from('missed_calls').insert([{ from_user: myNumber, to_user: currentNumber }]);
+        }
         currentNumber = "";
         document.getElementById('number-display').innerText = "0";
+        document.getElementById('clear-btn').style.display = 'none';
     }
 
     async function updateStatus(status) {
-        if (myNumber) {
-            await _supabase.from('profiles').update({ status: status }).eq('mobile_number', myNumber);
-        }
+        if (myNumber) await _supabase.from('profiles').update({ status: status }).eq('mobile_number', myNumber);
     }
 
-    // Go offline on close
     window.addEventListener('beforeunload', () => updateStatus('offline'));
-
 </script>
 </body>
 </html>
