@@ -1,25 +1,14 @@
-// ১. প্রয়োজনীয় ফাংশন ইমপোর্ট করুন
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; // Firestore এর জন্য
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// আপনার আগের কনফিগারেশন (এটি পরিবর্তন করার দরকার নেই)
 const firebaseConfig = {
   apiKey: "AIzaSyCjObx6UjbHXaMRnoZa2TcSAhsIcvgFnEY",
   authDomain: "dailer-482b0.firebaseapp.com",
   projectId: "dailer-482b0",
   storageBucket: "dailer-482b0.firebasestorage.app",
   messagingSenderId: "952901214213",
-  appId: "1:952901214213:web:2e0bab40a14b0796f57c6c",
-  measurementId: "G-LS79WEYK8Q"
+  appId: "1:952901214213:web:2e0bab40a14b0796f57c6c"
 };
 
-// ২. Firebase ইনিশিয়ালাইজ করুন
 const app = initializeApp(firebaseConfig);
-
-// ৩. Firestore ডাটাবেস সার্ভিস চালু করুন
 const db = getFirestore(app);
-const analytics = getAnalytics(app);
-
-// ৪. ডাটাবেস অবজেক্টটি এক্সপোর্ট করুন যাতে অন্য ফাইল থেকে ব্যবহার করা যায়
-export { db };
